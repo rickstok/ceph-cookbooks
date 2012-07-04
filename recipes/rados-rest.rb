@@ -22,7 +22,7 @@ packages = %w{
 	radosgw
 }
 
-if node['ceph']['install_debug' 
+if node['ceph']['install_debug']
 	packages = packages + %w{radosgw-dbg}
 end
 
