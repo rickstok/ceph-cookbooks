@@ -16,17 +16,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-		        
-include_recipe "ceph::rados-rest"
-
-packages = %w{
-	libapache2-mod-fastcgi
-}
 
 include_recipe "apache2"
 
+packages = %w{
+	radosgw
+	radosgw-dbg
+	libapache2-mod-fastcgi
+}
+
 packages.each do |pkg|
-	package pkg do 
+	package pkg do
 		action :upgrade
 	end
 end
@@ -58,9 +58,9 @@ template "/etc/apache2/sites-available/rgw.conf" do
 	owner "root"
 	group "root"
 	variables(
-		:ceph_api_fqdn => node['ceph']['api_fqdn'],
-		:ceph_admin_email => node['ceph']['admin_email'],
-		:ceph_rgw_addr => node['ceph']['rgw_addr']
+		:ceph_api_fqdn => node['ceph']['radosgw']['api_fqdn'],
+		:ceph_admin_email => node['ceph']['radosgw']['admin_email'],
+		:ceph_rgw_addr => node['ceph']['radosgw']['rgw_addr']
 	)
 	if ::File.exists?("#{node['apache']['dir']}/sites-enabled/rgw.conf")
 		notifies :restart, "service[apache2]"

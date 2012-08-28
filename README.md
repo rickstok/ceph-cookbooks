@@ -66,7 +66,6 @@ Ceph monitor nodes should use the ceph::mon recipe.
 Includes:
 
 * ceph::default
-* ceph::rados-rest
 
 Ceph Metadata Server
 --------------------
@@ -90,10 +89,6 @@ Ceph Rados Gateway
 ------------------
 
 Ceph Rados Gateway nodes should use the ceph::radosgw recipe
-
-Includes:
-
-* ceph::rados-rest
 
 LICENSE AND AUTHORS
 ===================
