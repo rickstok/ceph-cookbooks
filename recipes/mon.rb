@@ -5,7 +5,7 @@ raise "mon_initial_members must be set in config" if node["ceph"]["config"]['mon
 
 require 'json'
 
-include_recipe "ceph::default"
+include_recipe "ceph::common"
 include_recipe "ceph::conf"
 
 if is_crowbar?

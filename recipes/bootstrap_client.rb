@@ -1,6 +1,6 @@
 # this recipe allows bootstrapping ceph clients
 
-include_recipe "ceph::default"
+include_recipe "ceph::common"
 include_recipe "ceph::conf"
 
 mons = nil

@@ -18,7 +18,8 @@
 # limitations under the License.
 
 # this recipe allows bootstrapping new osds, with help from mon
-include_recipe "ceph::default"
+
+include_recipe "ceph::common"
 include_recipe "ceph::conf"
 
 package 'gdisk' do

@@ -1,7 +1,7 @@
 #
-# Author:: Guilhem Lettron <guilhem.lettron@youscribe.com>
+# Author:: Kyle Bader <kyle.bader@dreamhost.com>
 # Cookbook Name:: ceph
-# Recipe:: client-kernel
+# Recipe:: common
 #
 # Copyright 2011, DreamHost Web Hosting
 #
@@ -16,5 +16,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+		        
+packages = %w{
+	ceph
+	ceph-common
+}
 
-include_recipe "ceph::client-kernel"
+if node['ceph']['install_debug']
+	packages = packages + %w{ceph-dbg ceph-common-dbg}
+end
+
+packages.each do |pkg|
+	package pkg do
+		action :upgrade
+	end
+end
