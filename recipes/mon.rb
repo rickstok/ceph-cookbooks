@@ -1,6 +1,6 @@
 # this recipe creates a monitor cluster
-raise "fsid must be set in config" if node["ceph"]["config"]['fsid'].nil?
-raise "mon_initial_members must be set in config" if node["ceph"]["config"]['mon_initial_members'].nil?
+raise "fsid must be set in config" if node['ceph']['config']['fsid'].nil?
+raise "mon_initial_members must be set in config" if node['ceph']['config']['mon_initial_members'].nil?
 
 
 require 'json'
@@ -26,20 +26,20 @@ execute 'ceph-mon mkfs' do
   command <<-EOH
 set -e
 # TODO chef creates doesn't seem to suppressing re-runs, do it manually
-if [ -e '/var/lib/ceph/mon/ceph-#{node["hostname"]}/done' ]; then
+if [ -e '/var/lib/ceph/mon/#{cluster}-#{node['hostname']}/done' ]; then
   echo 'ceph-mon mkfs already done, skipping'
   exit 0
 fi
 KR='/var/lib/ceph/tmp/#{cluster}-#{node['hostname']}.mon.keyring'
 # TODO don't put the key in "ps" output, stdout
-ceph-authtool "$KR" --create-keyring --name=mon. --add-key='#{node["ceph"]["monitor-secret"]}' --cap mon 'allow *'
+ceph-authtool "$KR" --create-keyring --name=mon. --add-key='#{node['ceph']['monitor-secret']}' --cap mon 'allow *'
 
 ceph-mon --mkfs -i #{node['hostname']} --keyring "$KR"
 rm -f -- "$KR"
 touch /var/lib/ceph/mon/#{cluster}-#{node['hostname']}/done
 EOH
   # TODO built-in done-ness flag for ceph-mon?
-  creates '/var/lib/ceph/mon/ceph-#{node["hostname"]}/done'
+  creates "/var/lib/ceph/mon/#{cluster}-#{node["hostname"]}/done"
   notifies :start, "service[ceph-mon-all-starter]", :immediately
 end
 
@@ -48,14 +48,14 @@ ruby_block "tell ceph-mon about its peers" do
     mon_addresses = get_mon_addresses()
     mon_addresses.each do |addr|
       system 'ceph', \
-        '--admin-daemon', "/var/run/ceph/ceph-mon.#{node['hostname']}.asok", \
+        '--admin-daemon', "/var/run/ceph/#{cluster}-mon.#{node['hostname']}.asok", \
         'add_bootstrap_peer_hint', addr
       # ignore errors
     end
   end
 end
 
-have_key = ::File.exists?('/etc/ceph/ceph.client.admin.keyring')
+have_key = ::File.exists?('/etc/ceph/#{cluster}.client.admin.keyring')
 
 ruby_block "wait until quorum is formed" do
   block do
@@ -85,7 +85,7 @@ ruby_block "create client.admin keyring" do
         raise 'adding or getting admin key failed' unless $?.exitstatus == 0
         # TODO don't put the key in "ps" output, stdout
         system 'ceph-authtool', \
-          '/etc/ceph/ceph.client.admin.keyring', \
+          '/etc/ceph/#{cluster}.client.admin.keyring', \
           '--create-keyring', \
           '--name=client.admin', \
           "--add-key=#{key}"
