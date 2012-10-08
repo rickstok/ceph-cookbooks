@@ -20,7 +20,7 @@ service "ceph-mon-all-starter" do
 end
 
 # TODO cluster name
-cluster = 'ceph'
+cluster = node['ceph']['cluster']
 
 execute 'ceph-mon mkfs' do
   command <<-EOH
@@ -36,7 +36,7 @@ ceph-authtool "$KR" --create-keyring --name=mon. --add-key='#{node["ceph"]["moni
 
 ceph-mon --mkfs -i #{node['hostname']} --keyring "$KR"
 rm -f -- "$KR"
-touch /var/lib/ceph/mon/ceph-#{node['hostname']}/done
+touch /var/lib/ceph/mon/#{cluster}-#{node['hostname']}/done
 EOH
   # TODO built-in done-ness flag for ceph-mon?
   creates '/var/lib/ceph/mon/ceph-#{node["hostname"]}/done'

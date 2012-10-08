@@ -1,0 +1,1 @@
+default['ceph']['cluster'] = 'ceph'
