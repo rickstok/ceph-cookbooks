@@ -11,7 +11,7 @@ include_recipe "ceph::conf"
 if is_crowbar?
   ipaddress = Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").address
 else
-  ipaddress = node['ipaddress']
+  ipaddress = node['ceph']['mon']['ipaddress']
 end
 
 service "ceph-mon-all-starter" do
