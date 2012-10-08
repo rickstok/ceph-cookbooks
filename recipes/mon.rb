@@ -25,11 +25,6 @@ cluster = node['ceph']['cluster']
 execute 'ceph-mon mkfs' do
   command <<-EOH
 set -e
-# TODO chef creates doesn't seem to suppressing re-runs, do it manually
-if [ -e '/var/lib/ceph/mon/#{cluster}-#{node['hostname']}/done' ]; then
-  echo 'ceph-mon mkfs already done, skipping'
-  exit 0
-fi
 KR='/var/lib/ceph/tmp/#{cluster}-#{node['hostname']}.mon.keyring'
 # TODO don't put the key in "ps" output, stdout
 ceph-authtool "$KR" --create-keyring --name=mon. --add-key='#{node['ceph']['monitor-secret']}' --cap mon 'allow *'
@@ -39,8 +34,8 @@ rm -f -- "$KR"
 touch /var/lib/ceph/mon/#{cluster}-#{node['hostname']}/done
 EOH
   # TODO built-in done-ness flag for ceph-mon?
-  creates "/var/lib/ceph/mon/#{cluster}-#{node["hostname"]}/done"
   notifies :start, "service[ceph-mon-all-starter]", :immediately
+  not_if { node['ceph']['monitor-secret'].nil? or ::File.exists?("/var/lib/ceph/mon/#{cluster}-#{node['hostname']}/done") }
 end
 
 ruby_block "tell ceph-mon about its peers" do
