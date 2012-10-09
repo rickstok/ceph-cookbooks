@@ -18,3 +18,12 @@
 # limitations under the License.
 		        
 include_recipe "ceph::common"
+include_recipe "ceph::conf"
+
+service "ceph-mds" do
+  provider Chef::Provider::Service::Upstart
+  service_name "ceph-mds-all"
+  supports :restart => true
+  action [:enable, :start]
+  subscribes :restart, resources("template[ceph-conf]")
+end
