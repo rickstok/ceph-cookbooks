@@ -48,14 +48,14 @@ else
   # TODO cluster name
   cluster = node['ceph']['cluster']
 
-  execute "format as keyring" do
-    command <<-EOH
-      set -e
+  bash "format as keyring" do
+    code <<-EOH
       # TODO don't put the key in "ps" output, stdout
       ceph-authtool '/var/lib/ceph/bootstrap-osd/#{cluster}.keyring' --create-keyring --name=client.bootstrap-osd --add-key='#{mons[0]["ceph_bootstrap_osd_key"]}'
       rm -f '/var/lib/ceph/bootstrap-osd/#{cluster}.keyring.raw'
     EOH
-    creates "/var/lib/ceph/bootstrap-osd/#{cluster}.keyring"
+    flags "-e"
+    not_if { ::File.exist?("/var/lib/ceph/bootstrap-osd/#{cluster}.keyring") }
   end
 
   if is_crowbar?
