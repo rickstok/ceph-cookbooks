@@ -46,7 +46,7 @@ else
   end
 
   # TODO cluster name
-  cluster = 'ceph'
+  cluster = node['ceph']['cluster']
 
   execute "format as keyring" do
     command <<-EOH
