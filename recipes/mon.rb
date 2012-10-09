@@ -14,11 +14,6 @@ else
   ipaddress = node['ceph']['mon']['ipaddress']
 end
 
-service "ceph-mon-all-starter" do
-  provider Chef::Provider::Service::Upstart
-  action [:enable]
-end
-
 # TODO cluster name
 cluster = node['ceph']['cluster']
 mon_addresses = get_mon_addresses()
@@ -35,7 +30,7 @@ rm -f -- "$KR"
 touch /var/lib/ceph/mon/#{cluster}-#{node['hostname']}/done
 EOH
   # TODO built-in done-ness flag for ceph-mon?
-  notifies :start, "service[ceph-mon-all-starter]", :immediately
+  notifies :start, "service[ceph-mon]", :immediately
   not_if { node['ceph']['monitor-secret'].nil? or ::File.exists?("/var/lib/ceph/mon/#{cluster}-#{node['hostname']}/done") }
 end
 
@@ -119,4 +114,12 @@ ruby_block "save bootstrap_client_key" do
   end
   only_if { have_quorum? }
   not_if { node['ceph']['bootstrap_client_key'] }
+end
+
+service "ceph-mon" do
+  provider Chef::Provider::Service::Upstart
+  service_name "ceph-mon-all"
+  supports :restart => true
+  action [:enable, :start]
+  subscribes :restart, resources("template[ceph-conf]")
 end
