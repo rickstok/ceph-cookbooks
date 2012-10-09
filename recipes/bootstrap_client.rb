@@ -26,15 +26,15 @@ else
   end
 
   #TODO cluster name
-  cluster = 'ceph'
+  cluster = node['ceph']['cluster']
 
-  execute "format as keyring" do
-    command <<-EOH
-      set -e
+  bash "format as keyring" do
+    code <<-EOH
       # TODO don't put the key in "ps" output, stdout
-      ceph-authtool '/var/lib/ceph/bootstrap-client/#{cluster}.keyring' --create-keyring --name=client.bootstrap-client --add-key='#{mons[0]["ceph_bootstrap_client_key"]}'
-      rm -f '/var/lib/ceph/bootstrap-client/#{cluster}.keyring.raw'
+      ceph-authtool "/var/lib/ceph/bootstrap-client/#{cluster}.keyring" --create-keyring --name=client.bootstrap-client --add-key="#{mons[0]['ceph_bootstrap_client_key']}"
+      rm -f "/var/lib/ceph/bootstrap-client/#{cluster}.keyring.raw"
     EOH
-    creates 'var/lib/ceph/bootstrap-client/#{cluster}.keyring'
+    flags "-e"
+    not_if { ::File.exist?("/var/lib/ceph/bootstrap-client/#{cluster}.keyring") }
   end
 end
