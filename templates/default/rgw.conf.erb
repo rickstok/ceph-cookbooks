@@ -3,13 +3,15 @@ FastCgiExternalServer /var/www/dummyradosgw.fcgi -socket /var/run/ceph/radosgw.c
 LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\"" proxy_combined
 LogFormat "%{X-Forwarded-For}i %h %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\"" proxy_debug
 
-<VirtualHost <%= @ceph_rgw_addr %>>
-  ServerName <%= @ceph_api_fqdn %>
-  ServerAdmin <%= @ceph_admin_email %>
+<VirtualHost <%= @params[:bind] %>>
+  ServerName <%= @params[:server_name] %>
+  ServerAdmin <%= @params[:email] %>
   DocumentRoot /var/www/
 
-  RewriteEngine On
-  RewriteRule             ^/(.*) /dummyradosgw.fcgi?params=$1&%{QUERY_STRING} [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
+  <IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule             ^/(.*) /dummyradosgw.fcgi?params=$1&%{QUERY_STRING} [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
+  </IfModule>
 
   <IfModule mod_fastcgi.c>
     <Directory /var/www/>

@@ -1,9 +1,8 @@
-mon_addresses = get_mon_addresses()
-
-template '/etc/ceph/ceph.conf' do
-  source 'ceph.conf.erb'
+template "ceph-conf" do
+  source "ceph.conf.erb"
+  path "/etc/ceph/ceph.conf"
   variables(
-    :mon_addresses => mon_addresses
+    :mon_addresses => get_mon_addresses()
   )
   mode '0644'
 end

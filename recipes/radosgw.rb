@@ -18,56 +18,57 @@
 # limitations under the License.
 
 include_recipe "apache2"
+include_recipe "ceph::conf"
 
 packages = %w{
-	radosgw
-	radosgw-dbg
-	libapache2-mod-fastcgi
+  radosgw
+  radosgw-dbg
+  libapache2-mod-fastcgi
 }
 
 packages.each do |pkg|
-	package pkg do
-		action :upgrade
-	end
+  package pkg do
+    action :upgrade
+  end
 end
 
-cookbook_file "/etc/init.d/radosgw" do
-	source "radosgw"
-	mode 0755
-	owner "root"
-	group "root"
-end
+if ::File.exist?("/etc/init/radosgw-all.conf")
+  service "radosgw" do
+    service_name "radosgw-all"
+    supports :restart => true
+    action[:enable,:start]
+    provider Chef::Provider::Service::Upstart
+    subscribes :restart, resources("template[ceph-conf]")
+  end
+else
+  cookbook_file "/etc/init.d/radosgw" do
+    source "radosgw"
+    mode 0755
+    owner "root"
+    group "root"
+    notifies [:stop, :start], "service[radosgw]"
+  end
 
-service "radosgw" do
-	service_name "radosgw"
-	supports :restart => true
-	action[:enable,:start]
+  service "radosgw" do
+    service_name "radosgw"
+    supports :restart => true
+    action[:enable,:start]
+    subscribes :restart, resources("template[ceph-conf]")
+  end
 end
 
 apache_module "fastcgi" do
-	conf true
+  conf true
 end
 
 apache_module "rewrite" do
-	conf false
+  conf false
 end
 
-template "/etc/apache2/sites-available/rgw.conf" do
-	source "rgw.conf.erb"
-	mode 0400
-	owner "root"
-	group "root"
-	variables(
-		:ceph_api_fqdn => node['ceph']['radosgw']['api_fqdn'],
-		:ceph_admin_email => node['ceph']['radosgw']['admin_email'],
-		:ceph_rgw_addr => node['ceph']['radosgw']['rgw_addr']
-	)
-	if ::File.exists?("#{node['apache']['dir']}/sites-enabled/rgw.conf")
-		notifies :restart, "service[apache2]"
-	end
+web_app "rgw" do
+  template "rgw.conf.erb"
+  enable true
+  server_aliases node['ceph']['radosgw']['api_fqdn']
+  email          node['ceph']['radosgw']['admin_email']
+  bind           node['ceph']['radosgw']['rgw_addr']
 end
-
-apache_site "rgw.conf" do
-	enable enable_setting
-end
-
