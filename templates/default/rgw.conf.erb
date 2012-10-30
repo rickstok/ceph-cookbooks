@@ -8,8 +8,10 @@ LogFormat "%{X-Forwarded-For}i %h %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{Use
   ServerAdmin <%= @ceph_admin_email %>
   DocumentRoot /var/www/
 
-  RewriteEngine On
-  RewriteRule             ^/(.*) /dummyradosgw.fcgi?params=$1&%{QUERY_STRING} [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
+  <IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule             ^/(.*) /dummyradosgw.fcgi?params=$1&%{QUERY_STRING} [E=HTTP_AUTHORIZATION:%{HTTP:Authorization},L]
+  </IfModule>
 
   <IfModule mod_fastcgi.c>
     <Directory /var/www/>
