@@ -29,3 +29,10 @@ packages.each do |pkg|
 		action :upgrade
 	end
 end
+
+%w( ceph-osd ceph-hotplug ).each do | upstart |
+  template upstart do
+    source "#{upstart}.conf.erb"
+    path "/etc/init/#{upstart}.conf"
+  end
+end
