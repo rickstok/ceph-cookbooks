@@ -12,12 +12,12 @@ PATH=/sbin:/bin:/usr/bin
 
 . /lib/lsb/init-functions
 
-CLIENT_NAME=client.rgw-`hostname | sed 's/\..*//g'`
+CLIENT_NAME=client.radosgw.`hostname | sed 's/\..*//g'`
 USER=www-data
 
 
 do_start () {
-        su $USER -c "radosgw -c /etc/ceph/ceph.conf -n $CLIENT_NAME >> /var/log/radosgw/radosgw.log 2>&1 &"
+        radosgw -c /etc/ceph/ceph.conf -n $CLIENT_NAME --rgw-socket-path=/var/run/ceph/$CLIENT_NAME >> /var/log/ceph/$CLIENT_NAME.log 2>&1 &
 }
 
 case "$1" in
