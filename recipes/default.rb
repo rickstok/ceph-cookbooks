@@ -28,6 +28,6 @@ end
 
 packages.each do |pkg|
 	package pkg do
-		action :upgrade
+		action :install
 	end
 end
