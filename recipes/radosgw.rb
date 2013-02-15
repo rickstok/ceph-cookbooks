@@ -31,18 +31,18 @@ packages.each do |pkg|
 	end
 end
 
-cookbook_file "/etc/init.d/radosgw" do
-	source "radosgw"
-	mode 0755
-	owner "root"
-	group "root"
-end
+#cookbook_file "/etc/init.d/radosgw" do
+#	source "radosgw"
+#	mode 0755
+#	owner "root"
+#	group "root"
+#end
 
-service "radosgw" do
-	service_name "radosgw"
-	supports :restart => true
-	action[:enable,:start]
-end
+#service "radosgw" do
+#	service_name "radosgw"
+#	supports :restart => true
+#	action[:enable,:start]
+#end
 
 apache_module "fastcgi" do
 	conf true
