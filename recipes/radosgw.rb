@@ -21,7 +21,6 @@ include_recipe "apache2"
 
 packages = %w{
 	radosgw
-	radosgw-dbg
 	libapache2-mod-fastcgi
 }
 
