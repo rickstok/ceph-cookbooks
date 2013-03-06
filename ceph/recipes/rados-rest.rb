@@ -1,7 +1,7 @@
 #
 # Author:: Kyle Bader <kyle.bader@dreamhost.com>
 # Cookbook Name:: ceph
-# Recipe:: default
+# Recipe:: rados-client
 #
 # Copyright 2011, DreamHost Web Hosting
 #
@@ -17,13 +17,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 		        
+
 packages = %w{
-	ceph
-	ceph-common
+	radosgw
 }
 
 if node['ceph']['install_debug']
-	packages = packages + %w{ceph-dbg ceph-common-dbg}
+	packages = packages + %w{radosgw-dbg}
 end
 
 packages.each do |pkg|
