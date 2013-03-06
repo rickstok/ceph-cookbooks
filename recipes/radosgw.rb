@@ -25,9 +25,10 @@ packages = %w{
 }
 
 if node['ceph']['install_debug']
-  packages = packages + %w{
+  packages_dbg = %w{
     radosgw-dbg
   }
+  packages = packages + packages_dbg
 end
 
 packages.each do |pkg|
