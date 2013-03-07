@@ -23,7 +23,11 @@ packages = %w{
 }
 
 if node['ceph']['install_debug']
-	packages = packages + %w{ceph-dbg ceph-common-dbg}
+  packages_dbg = %w{
+    ceph-dbg
+    ceph-common-dbg
+  }
+  packages += packages_dbg
 end
 
 packages.each do |pkg|

@@ -21,6 +21,13 @@ packages = %w{
   radosgw
 }
 
+if node['ceph']['install_debug']
+  packages_dbg = %w{
+    radosgw-dbg
+  }
+  packages += packages_dbg
+end
+
 packages.each do |pkg|
   package pkg do
     action :install

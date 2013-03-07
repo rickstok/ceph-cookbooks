@@ -1,1 +1,1 @@
-default['ceph']['install_debug'] = false
+default['ceph']['install_debug'] = true
