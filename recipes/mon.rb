@@ -69,9 +69,12 @@ end
 # We store it when it is created
 ruby_block "get osd-bootstrap keyring" do
   block do
-    cmd = Chef::ShellOut.new("ceph auth get-key client.bootstrap-osd")
-    osd_bootstrap_key = cmd.run_command.stdout
-    node.override['ceph']['ceph_bootstrap_osd_key'] = osd_bootstrap_key
+    run_out = ""
+    while run_out.empty?
+      run_out = Chef::ShellOut.new("ceph auth get-key client.bootstrap-osd").run_command.stdout.strip
+      sleep 2
+    end
+    node.override['ceph']['ceph_bootstrap_osd_key'] = run_out
     node.save
   end
   not_if { node['ceph']['ceph_bootstrap_osd_key'] }
