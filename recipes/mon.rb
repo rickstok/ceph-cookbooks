@@ -23,7 +23,7 @@ service_type = service_type()
 service "ceph_mon" do
   case service_type
   when "upstart"
-    service_name "ceph-mon-all-starter"
+    service_name "ceph-mon-all"
     provider Chef::Provider::Service::Upstart
     action :enable
   when "sysvinit"
