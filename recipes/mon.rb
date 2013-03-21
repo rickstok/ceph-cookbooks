@@ -19,11 +19,6 @@ require 'json'
 include_recipe "ceph::default"
 include_recipe "ceph::conf"
 
-service "ceph-mon-all" do
-  provider Chef::Provider::Service::Upstart
-  action [:enable]
-end
-
 # TODO cluster name
 cluster = 'ceph'
 
@@ -77,3 +72,7 @@ ruby_block "get osd-bootstrap keyring" do
   end
 end
 
+service "ceph-mon-all" do
+  provider Chef::Provider::Service::Upstart
+  action [ :enable, :start ]
+end
