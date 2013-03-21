@@ -19,36 +19,48 @@ require 'json'
 include_recipe "ceph::default"
 include_recipe "ceph::conf"
 
+directory "/var/run/ceph" do
+  owner "root"
+  group "root"
+  mode 00644
+  recursive true
+  action :create
+end
+
 # TODO cluster name
 cluster = 'ceph'
 
-execute 'ceph-mon mkfs' do
-  command <<-EOH
-set -e
-mkdir -p /var/run/ceph
-KR='/var/lib/ceph/tmp/#{cluster}-#{node['hostname']}.mon.keyring'
-# TODO don't put the key in "ps" output, stdout
-ceph-authtool "$KR" --create-keyring --name=mon. --add-key='#{node["ceph"]["monitor-secret"]}' --cap mon 'allow *'
+unless node["ceph"]["mon"]["done"] or File.exists?("/var/lib/ceph/mon/ceph-#{node["hostname"]}/done")
+  keyring = "#{Chef::Config[:file_cache_path]}/#{cluster}-#{node['hostname']}.mon.keyring"
 
-ceph-mon --mkfs -i #{node['hostname']} --keyring "$KR"
-rm -f -- "$KR"
-touch /var/lib/ceph/mon/ceph-#{node['hostname']}/done
-touch /var/lib/ceph/mon/ceph-#{node['hostname']}/upstart
-EOH
-  creates '/var/lib/ceph/mon/ceph-#{node["hostname"]}/done'
-  creates '/var/lib/ceph/mon/ceph-#{node["hostname"]}/upstart'
-  notifies :start, "service[ceph-mon-all]", :immediately
+  execute "format as keyring" do
+    command "ceph-authtool '#{keyring}' --create-keyring --name=mon. --add-key='#{node["ceph"]["monitor-secret"]}' --cap mon 'allow *'"
+    creates "#{Chef::Config[:file_cache_path]}/#{cluster}-#{node['hostname']}.mon.keyring"
+  end
+
+  execute 'ceph-mon mkfs' do
+    command "ceph-mon --mkfs -i #{node['hostname']} --keyring '#{keyring}'"
+  end
+
+  ruby_block "finalise" do
+    block do
+      %w[done, upstart].each do |ack|
+        File.open("/var/lib/ceph/mon/ceph-#{node["hostname"]}/#{ack}", "w").close()
+      end
+      node.set["ceph"]["mon"]["done"] = true
+      node.save
+    end
+  end
 end
 
-ruby_block "tell ceph-mon about its peers" do
-  block do
-    mon_addresses = get_mon_addresses()
-    mon_addresses.each do |addr|
-      system 'ceph', \
-        '--admin-daemon', "/var/run/ceph/ceph-mon.#{node['hostname']}.asok", \
-        'add_bootstrap_peer_hint', addr
-      # ignore errors
-    end
+service "ceph-mon-all" do
+  provider Chef::Provider::Service::Upstart
+  action [ :enable, :start ]
+end
+
+get_mon_addresses().each do |addr|
+  execute "peer #{addr}" do
+    command "ceph --admin-daemon '/var/run/ceph/ceph-mon.#{node['hostname']}.asok' add_bootstrap_peer_hint #{addr}"
   end
 end
 
@@ -57,17 +69,10 @@ end
 # We store it when it is created
 ruby_block "get osd-bootstrap keyring" do
   block do
-    osd_bootstrap_key = ""
-    while osd_bootstrap_key.empty? do
-       osd_bootstrap_key = %x[ ceph auth get-key client.bootstrap-osd ]
-       sleep(1)
-    end
-    node.override['ceph_bootstrap_osd_key'] = osd_bootstrap_key
+    cmd = Chef::ShellOut.new("ceph auth get-key client.bootstrap-osd")
+    osd_bootstrap_key = cmd.run_command.stdout
+    node.override['ceph']['ceph_bootstrap_osd_key'] = osd_bootstrap_key
     node.save
   end
-end
-
-service "ceph-mon-all" do
-  provider Chef::Provider::Service::Upstart
-  action [ :enable, :start ]
+  not_if { node['ceph']['ceph_bootstrap_osd_key'] }
 end

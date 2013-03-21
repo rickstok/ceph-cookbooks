@@ -70,7 +70,7 @@ else
     owner "root"
     group "root"
     mode "0440"
-    content mons[0]["ceph_bootstrap_osd_key"]
+    content mons[0]["ceph"]["ceph_bootstrap_osd_key"]
   end
 
   execute "format as keyring" do
