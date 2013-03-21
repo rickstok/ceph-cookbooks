@@ -19,7 +19,7 @@ require 'json'
 include_recipe "ceph::default"
 include_recipe "ceph::conf"
 
-service "ceph-mon-all-starter" do
+service "ceph-mon-all" do
   provider Chef::Provider::Service::Upstart
   action [:enable]
 end
@@ -47,7 +47,7 @@ touch /var/lib/ceph/mon/ceph-#{node['hostname']}/upstart
 EOH
   creates '/var/lib/ceph/mon/ceph-#{node["hostname"]}/done'
   creates '/var/lib/ceph/mon/ceph-#{node["hostname"]}/upstart'
-  notifies :start, "service[ceph-mon-all-starter]", :immediately
+  notifies :start, "service[ceph-mon-all]", :immediately
 end
 
 ruby_block "tell ceph-mon about its peers" do
