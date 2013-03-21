@@ -1,10 +1,17 @@
 DESCRIPTION
 ===========
 
-These are incomplete, use with caution.  They have pulled from a working configuration using Debian.  They will require work for other distributions.  They also assume your package manager (apt-get, etc) are already configured for a ceph repository.
+Installs and configures Ceph, a distributed network storage and filesystem designed to provide excellent performance, reliability, and scalability.
 
-Installs and configures Ceph, a distributed network storage and filesystem 
-designed to provide excellent performance, reliability, and scalability.
+The current version is focused towards deploying Monitors and OSD on Ubuntu.
+
+For documentation on how to use this cookbook, refer to the [USAGE](#USAGE) section.
+
+Work in progress:
+
+* RadosGW
+* MDS
+* Other Distro (Debian, RHEL/CentOS, FC)
 
 REQUIREMENTS
 ============
@@ -13,7 +20,8 @@ Platform
 --------
 
 Tested as working:
- * Debian Squeeze (6.x)
+
+* Ubuntu Precise (12.04)
 
 Cookbooks
 ---------
@@ -22,6 +30,7 @@ The ceph cookbook requires the following cookbooks from Opscode:
 
 https://github.com/opscode/cookbooks
 
+* apt
 * apache2
 
 
@@ -44,29 +53,27 @@ USAGE
 =====
 
 Ceph cluster design is beyond the scope of this README, please turn to the
-public wiki, mailing lists, visit our IRC channel or Ceph Support page:
+public wiki, mailing lists, visit our IRC channel, or contact Inktank:
 
-http://ceph.newdream.net/wiki/
-http://ceph.newdream.net/mailing-lists-and-irc/
-http://www.cephsupport.com/
+http://ceph.com/docs/master
+http://ceph.com/resources/mailing-list-irc/
+http://www.inktank.com/
 
-This diagram helps visualize recipe inheritence of the ceph cookbook recipes:
-
- <diagram url>
 
 Ceph Monitor
 ------------
 
-Ceph monitor nodes should use the ceph::mon recipe. 
+Ceph monitor nodes should use the ceph-mon role.
 
 Includes:
 
 * ceph::default
+* ceph::conf
 
 Ceph Metadata Server
 --------------------
 
-Ceph metadata server nodes should use the ceph::mds recipe.
+Ceph metadata server nodes should use the ceph-mds role.
 
 Includes:
 
@@ -75,23 +82,24 @@ Includes:
 Ceph OSD
 --------
 
-Ceph OSD nodes should use the ceph::osd recipe
+Ceph OSD nodes should use the ceph-osd role
 
 Includes:
 
 * ceph::default
+* ceph::conf
 
 Ceph Rados Gateway
 ------------------
 
-Ceph Rados Gateway nodes should use the ceph::radosgw recipe
+Ceph Rados Gateway nodes should use the ceph-radosgw role
 
 LICENSE AND AUTHORS
 ===================
 
 * Author: Kyle Bader <kyle.bader@dreamhost.com>
 
-* Copyright 2011, DreamHost Web Hosting
+* Copyright 2013, DreamHost Web Hosting and Inktank Storage Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
