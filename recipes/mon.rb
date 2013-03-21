@@ -33,7 +33,6 @@ service "ceph_mon" do
   supports :restart => true
 end
 
-
 # TODO cluster name
 cluster = 'ceph'
 
@@ -87,4 +86,3 @@ ruby_block "get osd-bootstrap keyring" do
     node.save
   end
 end
-
