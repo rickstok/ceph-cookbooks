@@ -27,10 +27,18 @@ directory "/var/run/ceph" do
   action :create
 end
 
+directory "/var/lib/ceph/mon/ceph-#{node["hostname"]}" do
+  owner "root"
+  group "root"
+  mode 00644
+  recursive true
+  action :create
+end
+
 # TODO cluster name
 cluster = 'ceph'
 
-unless node["ceph"]["mon"]["done"] or File.exists?("/var/lib/ceph/mon/ceph-#{node["hostname"]}/done")
+unless File.exists?("/var/lib/ceph/mon/ceph-#{node["hostname"]}/done")
   keyring = "#{Chef::Config[:file_cache_path]}/#{cluster}-#{node['hostname']}.mon.keyring"
 
   execute "format as keyring" do
@@ -40,20 +48,20 @@ unless node["ceph"]["mon"]["done"] or File.exists?("/var/lib/ceph/mon/ceph-#{nod
 
   execute 'ceph-mon mkfs' do
     command "ceph-mon --mkfs -i #{node['hostname']} --keyring '#{keyring}'"
+    notifies :restart, "service[ceph-mon-all]", :immediately
   end
 
   ruby_block "finalise" do
     block do
-      %w[done, upstart].each do |ack|
+      %w[done upstart].each do |ack|
         File.open("/var/lib/ceph/mon/ceph-#{node["hostname"]}/#{ack}", "w").close()
       end
-      node.set["ceph"]["mon"]["done"] = true
-      node.save
     end
   end
 end
 
 service "ceph-mon-all" do
+  supports :status => true, :restart => true
   provider Chef::Provider::Service::Upstart
   action [ :enable, :start ]
 end
@@ -61,6 +69,7 @@ end
 get_mon_addresses().each do |addr|
   execute "peer #{addr}" do
     command "ceph --admin-daemon '/var/run/ceph/ceph-mon.#{node['hostname']}.asok' add_bootstrap_peer_hint #{addr}"
+    ignore_failure true
   end
 end
 
