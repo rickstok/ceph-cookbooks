@@ -62,22 +62,16 @@ unless File.exists?("/var/lib/ceph/mon/ceph-#{node["hostname"]}/done")
 
   execute 'ceph-mon mkfs' do
     command "ceph-mon --mkfs -i #{node['hostname']} --keyring '#{keyring}'"
-    notifies :restart, "service[ceph-mon-all]", :immediately
+    notifies :restart, "service[ceph_mon]", :immediately
   end
 
   ruby_block "finalise" do
     block do
-      %w[done upstart].each do |ack|
+      ["done", service_type].each do |ack|
         File.open("/var/lib/ceph/mon/ceph-#{node["hostname"]}/#{ack}", "w").close()
       end
     end
   end
-end
-
-service "ceph-mon-all" do
-  supports :status => true, :restart => true
-  provider Chef::Provider::Service::Upstart
-  action [ :enable, :start ]
 end
 
 get_mon_addresses().each do |addr|
