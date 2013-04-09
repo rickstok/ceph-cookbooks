@@ -44,11 +44,18 @@ if !search(:node,"hostname:#{node['hostname']} AND dmcrypt:true").empty?
     end
 end
 
-service "ceph-osd-all" do
-  provider Chef::Provider::Service::Upstart
-  service_name "ceph-osd-all"
+service_type = node["ceph"]["osd"]["init_style"]
+service "ceph_osd" do
+  case service_type
+  when "sysvinit"
+    service_name "ceph"
+    provider Chef::Provider::Service::Init
+  when "upstart"
+    service_name "ceph-osd-all"
+    provider Chef::Provider::Service::Upstart
+    action :enable
+  end
   supports :restart => true
-  action :enable
 end
 
 mons = get_mon_nodes("ceph_bootstrap_osd_key:*")
@@ -123,6 +130,9 @@ else
     #  - $cluster should always be ceph
     #  - The --dmcrypt option will be available starting w/ Cuttlefish
     node["ceph"]["osd_devices"].each_with_index do |osd_device,index|
+      if not osd_device["status"].nil?
+        next
+      end
       dmcrypt = ""
       if osd_device["encrypted"] == true
         dmcrypt = "--dmcrypt"
@@ -130,13 +140,13 @@ else
       execute "Creating Ceph OSD on #{osd_device['device']}" do
         command "ceph-disk-prepare #{dmcrypt} #{osd_device['device']}"
         action :run
-        notifies :start, "service[ceph-osd-all]", :immediately
+        notifies :start, "service[ceph_osd]", :immediately
       end
       # we add this status to the node env
       # so that we can implement recreate
       # and/or delete functionalities in the
       # future.
-      node.normal["ceph"]["osd_devices"][index]["status"] == "deployed"
+      node.normal["ceph"]["osd_devices"][index]["status"] = "deployed"
       node.save
     end
   end

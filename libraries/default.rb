@@ -23,11 +23,27 @@ end
 def get_mon_addresses()
   mons = []
 
-  # make sure if this node runs ceph-mon, it's always included even if
-  # search is laggy; put it first in the hopes that clients will talk
-  # primarily to local node
-  if node['roles'].include? 'ceph-mon'
-    mons << node
+  if File.exists?("/var/run/ceph/ceph-mon.#{node['hostname']}.asok")
+    mon_ips = get_quorum_members_ips()
+  else
+    mons = []
+    # make sure if this node runs ceph-mon, it's always included even if
+    # search is laggy; put it first in the hopes that clients will talk
+    # primarily to local node
+    if node['roles'].include? 'ceph-mon'
+      mons << node
+    end
+
+    mons += get_mon_nodes()
+    if is_crowbar?
+      mon_ips = mons.map { |node| Chef::Recipe::Barclamp::Inventory.get_network_by_type(node, "admin").address }
+    else
+      if node['ceph']['config']['global'] && node['ceph']['config']['global']['public network']
+        mon_ips = mons.map { |nodeish| find_node_ip_in_network(node['ceph']['config']['global']['public network'], nodeish) }
+      else
+        mon_ips = mons.map { |node| node['ipaddress'] + ":6789" }
+      end
+    end
   end
 
   mons += get_mon_nodes()

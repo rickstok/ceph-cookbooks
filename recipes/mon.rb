@@ -14,10 +14,10 @@
 #  different and are created in
 #  /var/lib/ceph/bootstrap-{osd,mds}/ceph.keyring
 
-require 'json'
-
 include_recipe "ceph::default"
 include_recipe "ceph::conf"
+
+service_type = node["ceph"]["mon"]["init_style"]
 
 directory "/var/run/ceph" do
   owner "root"
@@ -48,21 +48,27 @@ unless File.exists?("/var/lib/ceph/mon/ceph-#{node["hostname"]}/done")
 
   execute 'ceph-mon mkfs' do
     command "ceph-mon --mkfs -i #{node['hostname']} --keyring '#{keyring}'"
-    notifies :restart, "service[ceph-mon-all]", :immediately
   end
 
   ruby_block "finalise" do
     block do
-      %w[done upstart].each do |ack|
+      ["done", service_type].each do |ack|
         File.open("/var/lib/ceph/mon/ceph-#{node["hostname"]}/#{ack}", "w").close()
       end
     end
   end
 end
 
-service "ceph-mon-all" do
-  supports :status => true, :restart => true
-  provider Chef::Provider::Service::Upstart
+service "ceph_mon" do
+  case service_type
+  when "upstart"
+    service_name "ceph-mon-all"
+    provider Chef::Provider::Service::Upstart
+  when "sysvinit"
+    service_name "ceph"
+    provider Chef::Provider::Service::Init
+  end
+  supports :restart => true, :status => true
   action [ :enable, :start ]
 end
 
